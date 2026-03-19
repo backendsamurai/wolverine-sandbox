@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseWolverine(opt =>
 {
-    opt.Policies.AddMiddleware<TranslationalMiddleware>();
+    opt.Policies.AddMiddleware<TransactionalMiddleware>();
 
     opt.Services.CritterStackDefaults(x =>
     {

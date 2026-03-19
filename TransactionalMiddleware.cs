@@ -1,12 +1,12 @@
 namespace WolverineSandbox;
 
-public sealed class TranslationalMiddleware
+public sealed class TransactionalMiddleware
 {
-    private readonly ILogger<TranslationalMiddleware> _logger;
+    private readonly ILogger<TransactionalMiddleware> _logger;
 
     private readonly MongoContext _mongoContext;
 
-    public TranslationalMiddleware(ILogger<TranslationalMiddleware> logger, MongoContext mongoContext)
+    public TransactionalMiddleware(ILogger<TransactionalMiddleware> logger, MongoContext mongoContext)
     {
         _logger = logger;
         _mongoContext = mongoContext;
