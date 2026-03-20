@@ -6,16 +6,33 @@ using MongoDB.Driver;
 using Wolverine;
 using WolverineSandbox;
 using WolverineSandbox.Contracts;
+using WolverineSandbox.Domain.Boons;
 using WolverineSandbox.Handlers.Abstractions;
 using WolverineSandbox.Persistence.Abstractions;
 using WolverineSandbox.Persistence.Mongo.Abstractions;
 using WolverineSandbox.Persistence.Mongo.Repositories;
+using WolverineSandbox.Persistence.Mongo.Serializers;
 using WolverineSandbox.Policies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseWolverine(opt =>
 {
+    opt.Discovery.DisableConventionalDiscovery();
+
+    opt.Discovery.IncludeAssembly(typeof(Program).Assembly);
+
+    opt.Discovery.CustomizeHandlerDiscovery(q =>
+    {
+        q.Includes.WithCondition("Must implement handler interface", t =>
+            t.GetInterfaces().Any(i => i.IsGenericType && (
+                i.GetGenericTypeDefinition() == typeof(ICommandHandler<>) ||
+                i.GetGenericTypeDefinition() == typeof(ICommandHandler<,>) ||
+                i.GetGenericTypeDefinition() == typeof(IQueryHandler<,>) ||
+                i.GetGenericTypeDefinition() == typeof(IDomainEventHandler<>)
+            )));
+    });
+
     opt.Policies.Add<TransactionalCommandPolicy>();
 
     opt.Services.CritterStackDefaults(x =>
@@ -36,6 +53,7 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<IMongoClient>((_) =>
 {
     BsonSerializer.RegisterSerializer(new GuidSerializer(MongoDB.Bson.GuidRepresentation.Standard));
+    BsonSerializer.RegisterSerializer(new EntityIdSerializer<BoonId>());
 
     return new MongoClient("mongodb://localhost:27017/wolvsandbox");
 });
@@ -50,6 +68,8 @@ builder.Services.AddSingleton((sp) =>
 builder.Services.AddScoped<IMongoContext, MongoContext>();
 builder.Services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
 builder.Services.AddScoped<IBoonRepository, BoonRepository>();
+builder.Services.AddScoped<IEventBus, EventBus>();
+builder.Services.AddScoped<IMediator, Mediator>();
 
 var app = builder.Build();
 

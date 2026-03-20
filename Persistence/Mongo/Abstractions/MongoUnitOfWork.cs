@@ -7,10 +7,10 @@ namespace WolverineSandbox.Persistence.Mongo.Abstractions;
 public sealed class MongoUnitOfWork : IUnitOfWork
 {
     private readonly IMongoContext _context;
-    private readonly IMessageBus _bus;
+    private readonly IEventBus _bus;
     private readonly List<IAggregateRoot> _tracked = [];
 
-    public MongoUnitOfWork(IMongoContext context, IMessageBus bus)
+    public MongoUnitOfWork(IMongoContext context, IEventBus bus)
     {
         _context = context;
         _bus = bus;
@@ -32,9 +32,7 @@ public sealed class MongoUnitOfWork : IUnitOfWork
 
         foreach (var aggregate in _tracked)
         {
-            foreach (var @event in aggregate.DomainEvents)
-                await _bus.SendAsync(@event);
-
+            await _bus.PublishAsync(aggregate.DomainEvents);
             aggregate.ClearEvents();
         }
 

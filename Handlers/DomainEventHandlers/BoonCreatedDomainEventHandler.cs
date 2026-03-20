@@ -1,5 +1,5 @@
-using WolverineSandbox.Domain.Abstractions;
 using WolverineSandbox.Domain.Boons;
+using WolverineSandbox.Handlers.Abstractions;
 
 namespace WolverineSandbox.Handlers.DomainEventHandlers;
 

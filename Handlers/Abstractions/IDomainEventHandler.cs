@@ -1,4 +1,6 @@
-namespace WolverineSandbox.Domain.Abstractions;
+using WolverineSandbox.Domain.Abstractions;
+
+namespace WolverineSandbox.Handlers.Abstractions;
 
 public interface IDomainEventHandler<TEvent> where TEvent : IDomainEvent
 {
