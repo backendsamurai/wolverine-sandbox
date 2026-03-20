@@ -29,25 +29,30 @@ public sealed class MongoContext : IMongoContext
 
     public async Task StartTransactionAsync(CancellationToken ct = default)
     {
-        var session = await MongoClient.StartSessionAsync(cancellationToken: ct);
-        _clientSession = session;
+        if (_clientSession != null)
+            return;
+
+        _clientSession = await MongoClient.StartSessionAsync(cancellationToken: ct);
         _clientSession.StartTransaction();
     }
 
     public async Task CommitTransactionAsync(CancellationToken ct = default)
     {
-        if (IsTransactionActive)
-        {
-            await _clientSession!.CommitTransactionAsync(ct);
-        }
+        if (_clientSession == null)
+            return;
+
+        await _clientSession.CommitTransactionAsync(ct);
+        _clientSession.Dispose();
+        _clientSession = null;
     }
 
     public async Task RollbackTransactionAsync(CancellationToken ct = default)
     {
-        if (IsTransactionActive)
-        {
-            await _clientSession!.AbortTransactionAsync(ct);
-            _clientSession.Dispose();
-        }
+        if (_clientSession == null)
+            return;
+
+        await _clientSession.AbortTransactionAsync(ct);
+        _clientSession.Dispose();
+        _clientSession = null;
     }
 }

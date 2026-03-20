@@ -1,14 +1,14 @@
-using Wolverine;
 using WolverineSandbox.Contracts;
 using WolverineSandbox.Domain.Boons;
+using WolverineSandbox.Persistence.Abstractions;
 using WolverineSandbox.Persistence.Mongo.Abstractions;
 
 namespace WolverineSandbox.Persistence.Mongo.Repositories;
 
 public sealed class BoonRepository : MongoRepository<Boon, BoonId>, IBoonRepository
 {
-    public BoonRepository(IMongoContext context, IMessageBus messageBus)
-        : base(context, messageBus) { }
+    public BoonRepository(IMongoContext context, IUnitOfWork unitOfWork)
+        : base(context, unitOfWork) { }
 
     public async Task InsertBoonAsync(Boon boon, CancellationToken ct = default)
     {

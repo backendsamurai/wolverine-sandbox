@@ -1,24 +1,23 @@
 using MongoDB.Driver;
-using Wolverine;
 using WolverineSandbox.Domain.Abstractions;
 using WolverineSandbox.Persistence.Abstractions;
 
 namespace WolverineSandbox.Persistence.Mongo.Abstractions;
 
-public abstract class MongoRepository<T, TId> : IRepository<T, TId>
+public abstract class MongoRepository<T, TId>
     where T : AggregateRoot<TId>
     where TId : IEntityId
 {
     private readonly IMongoContext _context;
-    private readonly IMessageBus _messageBus;
+    private readonly IUnitOfWork _uow;
 
     protected readonly IMongoCollection<T> collection;
 
-    protected MongoRepository(IMongoContext context, IMessageBus messageBus)
+    protected MongoRepository(IMongoContext context, IUnitOfWork uow)
     {
         _context = context;
         collection = _context.GetCollection<T>();
-        _messageBus = messageBus;
+        _uow = uow;
     }
 
     public async Task<IList<T>> GetManyAsync(CancellationToken ct = default)
@@ -37,25 +36,10 @@ public abstract class MongoRepository<T, TId> : IRepository<T, TId>
 
     public async Task AddAsync(T entity, CancellationToken ct = default)
     {
-        var session = _context.GetCurrentSession();
+        var session = _context.GetCurrentSession()
+            ?? throw new InvalidOperationException("Any operations that modify data should be wrapped by session (transaction).");
 
-        if (session is null)
-        {
-            await collection.InsertOneAsync(entity, cancellationToken: ct);
-            await PublishDomainEvents(entity);
-
-            return;
-        }
-
-        await collection.InsertOneAsync(_context.GetCurrentSession(), entity, cancellationToken: ct);
-        await PublishDomainEvents(entity);
-    }
-
-    private async Task PublishDomainEvents(T entity)
-    {
-        foreach (var @event in entity.DomainEvents)
-        {
-            await _messageBus.SendAsync(@event);
-        }
+        await collection.InsertOneAsync(session, entity, cancellationToken: ct);
+        _uow.Track(entity);
     }
 }

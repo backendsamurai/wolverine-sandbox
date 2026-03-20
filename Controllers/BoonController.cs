@@ -17,5 +17,5 @@ public sealed class BoonController : ControllerBase
 
     [HttpPost]
     public async Task CreateBoonAsync([FromBody] CreateBoonDTO dto, CancellationToken ct = default) =>
-        await _messageBus.InvokeAsync(dto, ct);
+        await _messageBus.InvokeAsync(new CreateBoonCommand(dto), ct);
 }

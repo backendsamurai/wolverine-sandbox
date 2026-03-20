@@ -1,0 +1,49 @@
+using Wolverine;
+using WolverineSandbox.Domain.Abstractions;
+using WolverineSandbox.Persistence.Abstractions;
+
+namespace WolverineSandbox.Persistence.Mongo.Abstractions;
+
+public sealed class MongoUnitOfWork : IUnitOfWork
+{
+    private readonly IMongoContext _context;
+    private readonly IMessageBus _bus;
+    private readonly List<IAggregateRoot> _tracked = [];
+
+    public MongoUnitOfWork(IMongoContext context, IMessageBus bus)
+    {
+        _context = context;
+        _bus = bus;
+    }
+
+    public async Task BeginAsync(CancellationToken ct = default)
+    {
+        await _context.StartTransactionAsync(ct);
+    }
+
+    public void Track(IAggregateRoot aggregate)
+    {
+        _tracked.Add(aggregate);
+    }
+
+    public async Task SaveChangesAsync(CancellationToken ct = default)
+    {
+        await _context.CommitTransactionAsync(ct);
+
+        foreach (var aggregate in _tracked)
+        {
+            foreach (var @event in aggregate.DomainEvents)
+                await _bus.SendAsync(@event);
+
+            aggregate.ClearEvents();
+        }
+
+        _tracked.Clear();
+    }
+
+    public async Task RollbackAsync(CancellationToken ct = default)
+    {
+        await _context.RollbackTransactionAsync(ct);
+        _tracked.Clear();
+    }
+}

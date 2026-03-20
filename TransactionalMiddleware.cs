@@ -1,40 +1,37 @@
-using WolverineSandbox.Persistence.Mongo.Abstractions;
+using WolverineSandbox.Persistence.Abstractions;
 
 namespace WolverineSandbox;
 
 public sealed class TransactionalMiddleware
 {
     private readonly ILogger<TransactionalMiddleware> _logger;
+    private readonly IUnitOfWork _uow;
 
-    private readonly IMongoContext _mongoContext;
-
-    public TransactionalMiddleware(ILogger<TransactionalMiddleware> logger, MongoContext mongoContext)
+    public TransactionalMiddleware(IUnitOfWork uow, ILogger<TransactionalMiddleware> logger)
     {
+        _uow = uow;
         _logger = logger;
-        _mongoContext = mongoContext;
     }
 
-    public async Task BeforeAsync(CancellationToken ct = default)
+    public async Task BeforeAsync()
     {
-        _logger.LogInformation("WOLVERINE: before execute");
-        await _mongoContext.StartTransactionAsync(ct);
+        _logger.LogInformation("TRANSACTIONAL MIDDLEWARE : BEFORE EXECUTION");
+        await _uow.BeginAsync();
     }
 
-    public async Task AfterAsync(CancellationToken ct = default)
+    public async Task AfterAsync()
     {
-        _logger.LogInformation("WOLVERINE: after execute");
-        _logger.LogInformation("WOLVERINE: commit transaction;");
-        await _mongoContext.CommitTransactionAsync(ct);
+        _logger.LogInformation("TRANSACTIONAL MIDDLEWARE : AFTER EXECUTION");
+        await _uow.SaveChangesAsync();
     }
 
-    public async Task FinallyAsync(Exception? exception, CancellationToken ct = default)
+    public async Task FinallyAsync(Exception? exception)
     {
-        _logger.LogInformation("WOLVERINE: finally");
+        _logger.LogInformation("TRANSACTIONAL MIDDLEWARE : FINALLY");
 
         if (exception is not null)
         {
-            _logger.LogInformation("WOLVERINE: abort transaction;");
-            await _mongoContext.RollbackTransactionAsync(ct);
+            await _uow.RollbackAsync();
         }
     }
 }

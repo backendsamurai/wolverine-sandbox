@@ -1,20 +1,22 @@
 using JasperFx;
 using JasperFx.CodeGeneration;
 using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using Wolverine;
 using WolverineSandbox;
 using WolverineSandbox.Contracts;
+using WolverineSandbox.Handlers.Abstractions;
+using WolverineSandbox.Persistence.Abstractions;
 using WolverineSandbox.Persistence.Mongo.Abstractions;
 using WolverineSandbox.Persistence.Mongo.Repositories;
+using WolverineSandbox.Policies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseWolverine(opt =>
 {
-    opt.Policies.AddMiddleware<TransactionalMiddleware>();
+    opt.Policies.Add<TransactionalCommandPolicy>();
 
     opt.Services.CritterStackDefaults(x =>
     {
@@ -45,7 +47,8 @@ builder.Services.AddSingleton((sp) =>
     return mongoClient.GetDatabase("wolvsandbox");
 });
 
-builder.Services.AddSingleton<IMongoContext, MongoContext>();
+builder.Services.AddScoped<IMongoContext, MongoContext>();
+builder.Services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
 builder.Services.AddScoped<IBoonRepository, BoonRepository>();
 
 var app = builder.Build();
