@@ -1,10 +1,12 @@
+using WolverineSandbox.Persistence.Mongo.Abstractions;
+
 namespace WolverineSandbox;
 
 public sealed class TransactionalMiddleware
 {
     private readonly ILogger<TransactionalMiddleware> _logger;
 
-    private readonly MongoContext _mongoContext;
+    private readonly IMongoContext _mongoContext;
 
     public TransactionalMiddleware(ILogger<TransactionalMiddleware> logger, MongoContext mongoContext)
     {
@@ -12,37 +14,27 @@ public sealed class TransactionalMiddleware
         _mongoContext = mongoContext;
     }
 
-    public void Before()
+    public async Task BeforeAsync(CancellationToken ct = default)
     {
         _logger.LogInformation("WOLVERINE: before execute");
-        var session = _mongoContext.Client.StartSession();
-
-        session.StartTransaction();
-
-        _mongoContext.ClientSession = session;
+        await _mongoContext.StartTransactionAsync(ct);
     }
 
-    public void After()
+    public async Task AfterAsync(CancellationToken ct = default)
     {
         _logger.LogInformation("WOLVERINE: after execute");
-
-        if (_mongoContext.ClientSession is not null && _mongoContext.ClientSession is { IsInTransaction: true })
-        {
-            _logger.LogInformation("WOLVERINE: commit transaction;");
-            _mongoContext.ClientSession.CommitTransaction();
-        }
+        _logger.LogInformation("WOLVERINE: commit transaction;");
+        await _mongoContext.CommitTransactionAsync(ct);
     }
 
-    public void Finally(Exception? exception)
+    public async Task FinallyAsync(Exception? exception, CancellationToken ct = default)
     {
         _logger.LogInformation("WOLVERINE: finally");
 
-        if (exception is not null && _mongoContext.ClientSession is not null && _mongoContext.ClientSession.IsInTransaction)
+        if (exception is not null)
         {
             _logger.LogInformation("WOLVERINE: abort transaction;");
-            _mongoContext.ClientSession.AbortTransaction();
+            await _mongoContext.RollbackTransactionAsync(ct);
         }
-
-        _mongoContext.ClientSession?.Dispose();
     }
 }

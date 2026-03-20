@@ -1,8 +1,14 @@
 using JasperFx;
 using JasperFx.CodeGeneration;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using Wolverine;
 using WolverineSandbox;
+using WolverineSandbox.Contracts;
+using WolverineSandbox.Persistence.Mongo.Abstractions;
+using WolverineSandbox.Persistence.Mongo.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,9 +29,12 @@ builder.Host.UseWolverine(opt =>
 });
 
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
 
 builder.Services.AddSingleton<IMongoClient>((_) =>
 {
+    BsonSerializer.RegisterSerializer(new GuidSerializer(MongoDB.Bson.GuidRepresentation.Standard));
+
     return new MongoClient("mongodb://localhost:27017/wolvsandbox");
 });
 
@@ -36,20 +45,12 @@ builder.Services.AddSingleton((sp) =>
     return mongoClient.GetDatabase("wolvsandbox");
 });
 
-builder.Services.AddSingleton((sp) =>
-{
-    var mongoClient = sp.GetRequiredService<IMongoClient>();
-    var mongoDatabase = sp.GetRequiredService<IMongoDatabase>();
-
-    return new MongoContext
-    {
-        Client = mongoClient,
-        Database = mongoDatabase,
-    };
-});
-
+builder.Services.AddSingleton<IMongoContext, MongoContext>();
+builder.Services.AddScoped<IBoonRepository, BoonRepository>();
 
 var app = builder.Build();
+
+app.MapControllers();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -78,14 +79,6 @@ app.Use(async (context, next) =>
 
         await context.Response.WriteAsJsonAsync(new { Error = ex.Message });
     }
-});
-
-
-app.MapGet("/test", async (IMessageBus mb) =>
-{
-    var todo = await mb.InvokeAsync<TodoItem>(new CreateTodo("Title"));
-
-    return todo;
 });
 
 
