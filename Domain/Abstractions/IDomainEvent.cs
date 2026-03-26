@@ -1,3 +1,5 @@
+using WolverineSandbox.Contracts;
+
 namespace WolverineSandbox.Domain.Abstractions;
 
-public interface IDomainEvent { }
+public interface IDomainEvent: IEvent { }

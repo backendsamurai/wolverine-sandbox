@@ -1,4 +1,5 @@
 using Wolverine;
+using WolverineSandbox.Contracts;
 using WolverineSandbox.Domain.Abstractions;
 using WolverineSandbox.Handlers.Abstractions;
 
@@ -17,9 +18,9 @@ public interface IMediator
 
 public interface IEventBus
 {
-    public Task PublishAsync<TEvent>(TEvent @event) where TEvent : IDomainEvent;
+    public Task PublishAsync<TEvent>(TEvent @event) where TEvent : IEvent;
 
-    public Task PublishAsync<TEvent>(IEnumerable<TEvent> events) where TEvent : IDomainEvent;
+    public Task PublishAsync<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent;
 }
 
 
@@ -57,12 +58,12 @@ public sealed class EventBus : IEventBus
         _messageBus = messageBus;
     }
 
-    public async Task PublishAsync<TEvent>(TEvent @event) where TEvent : IDomainEvent
+    public async Task PublishAsync<TEvent>(TEvent @event) where TEvent : IEvent
     {
         await _messageBus.PublishAsync(@event);
     }
 
-    public async Task PublishAsync<TEvent>(IEnumerable<TEvent> events) where TEvent : IDomainEvent
+    public async Task PublishAsync<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent
     {
         foreach (var @event in events)
         {
