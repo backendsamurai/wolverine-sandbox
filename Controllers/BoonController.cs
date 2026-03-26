@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Wolverine;
+using WolverineSandbox.Domain.Boons;
 using WolverineSandbox.Handlers;
 
 namespace WolverineSandbox.Controllers;
@@ -8,14 +8,18 @@ namespace WolverineSandbox.Controllers;
 [Route("boons")]
 public sealed class BoonController : ControllerBase
 {
-    private readonly IMessageBus _messageBus;
+    private readonly IMediator _mediator;
 
-    public BoonController(IMessageBus messageBus)
+    public BoonController(IMediator mediator)
     {
-        _messageBus = messageBus;
+        _mediator = mediator;
     }
 
     [HttpPost]
     public async Task CreateBoonAsync([FromBody] CreateBoonDTO dto, CancellationToken ct = default) =>
-        await _messageBus.InvokeAsync(new CreateBoonCommand(dto), ct);
+        await _mediator.SendCommandAsync(new CreateBoonCommand(dto), ct);
+
+    [HttpGet("{authorId:guid}")]
+    public async Task<IList<Boon>> GetBoonsByAuthorAsync(Guid authorId, CancellationToken ct = default) =>
+        await _mediator.SendQueryAsync(new GetBoonsByAuthorQuery(authorId), ct);
 }

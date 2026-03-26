@@ -1,4 +1,6 @@
+using MongoDB.Driver;
 using WolverineSandbox.Contracts;
+using WolverineSandbox.Domain.Abstractions;
 using WolverineSandbox.Domain.Boons;
 using WolverineSandbox.Persistence.Abstractions;
 using WolverineSandbox.Persistence.Mongo.Abstractions;
@@ -15,9 +17,11 @@ public sealed class BoonRepository : MongoRepository<Boon, BoonId>, IBoonReposit
         await AddAsync(boon, ct);
     }
 
-    public async Task<IList<Boon>> GetAllBoonsAsync(CancellationToken ct = default) =>
-        await GetManyAsync(ct);
-
     public async Task<Boon> GetBoonByIdAsync(BoonId id, CancellationToken ct = default) =>
         await GetByIdAsync(id, ct);
+
+    public async Task<IList<Boon>> GetAllBoonsAsync(ISpecification<Boon> specification, CancellationToken ct = default)
+    {
+        return await collection.Find(specification.ToExpression()).ToListAsync(ct);
+    }
 }
