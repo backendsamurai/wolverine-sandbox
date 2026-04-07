@@ -1,12 +1,15 @@
 ﻿using Poc.DomainDrivenDesign.Application.Abstractions.Mediator;
 using Poc.DomainDrivenDesign.Domain.BoonAggregate;
 using Poc.DomainDrivenDesign.Domain.BoonAggregate.Specifications;
+using System.Reflection;
 
 namespace Poc.DomainDrivenDesign.Application.Boons.GetByAuthor;
 
-public record GetBoonsByAuthorQuery(Guid AuthorId) : IQuery<IList<Boon>>;
+public record BoonByAuthorDto(BoonId Id, string Body, string Slug, string[] Tags);
 
-public class GetBoonsByAuthorQueryHandler : IQueryHandler<GetBoonsByAuthorQuery, IList<Boon>>
+public record GetBoonsByAuthorQuery(Guid AuthorId) : IQuery<IList<BoonByAuthorDto>>;
+
+public class GetBoonsByAuthorQueryHandler : IQueryHandler<GetBoonsByAuthorQuery, IList<BoonByAuthorDto>>
 {
     private readonly IBoonRepository _boonRepository;
 
@@ -15,10 +18,12 @@ public class GetBoonsByAuthorQueryHandler : IQueryHandler<GetBoonsByAuthorQuery,
         _boonRepository = boonRepository;
     }
 
-    public async Task<IList<Boon>> HandleAsync(GetBoonsByAuthorQuery query, CancellationToken ct = default)
+    public async Task<IList<BoonByAuthorDto>> HandleAsync(GetBoonsByAuthorQuery query, CancellationToken ct = default)
     {
         var spec = new GetByAuthorIdSpec(query.AuthorId);
 
-        return await _boonRepository.GetAllBoonsAsync(spec, ct);
+        var boons = await _boonRepository.GetAllBoonsAsync(spec, ct);
+
+        return [.. boons.Select(b => b.ToBoonByAuthorDto())];
     }
 }

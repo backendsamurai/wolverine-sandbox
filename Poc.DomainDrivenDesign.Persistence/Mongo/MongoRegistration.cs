@@ -42,6 +42,18 @@ public static class MongoRegistration
         services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
         services.AddScoped<IBoonRepository, BoonRepository>();
 
+        RegisterBsonClassMappings();
+
         return services;
+    }
+
+
+    private static void RegisterBsonClassMappings()
+    {
+        BsonClassMap.TryRegisterClassMap<Boon>(cm =>
+        {
+            cm.AutoMap();
+            cm.MapField("_tags").SetElementName(nameof(Boon.Tags));
+        });
     }
 }

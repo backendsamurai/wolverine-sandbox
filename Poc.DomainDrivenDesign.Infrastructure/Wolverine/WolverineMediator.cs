@@ -12,17 +12,17 @@ public sealed class Mediator : IMediator
         _messageBus = messageBus;
     }
 
-    public async Task<TResponse> SendCommandAsync<TResponse>(ICommand<TResponse> command, CancellationToken ct = default)
+    public async Task<TResponse> ExecuteCommandAsync<TResponse>(ICommand<TResponse> command, CancellationToken ct = default)
     {
         return await _messageBus.InvokeAsync<TResponse>(command, ct);
     }
 
-    public async Task SendCommandAsync(ICommand command, CancellationToken ct = default)
+    public async Task ExecuteCommandAsync(ICommand command, CancellationToken ct = default)
     {
         await _messageBus.InvokeAsync(command, ct);
     }
 
-    public async Task<TResponse> SendQueryAsync<TResponse>(IQuery<TResponse> query, CancellationToken ct = default)
+    public async Task<TResponse> ExecuteQueryAsync<TResponse>(IQuery<TResponse> query, CancellationToken ct = default)
     {
         return await _messageBus.InvokeAsync<TResponse>(query, ct);
     }

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Poc.DomainDrivenDesign.Application.Abstractions.Mediator;
 using Poc.DomainDrivenDesign.Application.Boons.Create;
 using Poc.DomainDrivenDesign.Application.Boons.GetByAuthor;
-using Poc.DomainDrivenDesign.Domain.BoonAggregate;
 
 namespace Poc.DomainDrivenDesign.Api.Controllers;
 
@@ -17,7 +16,7 @@ public sealed class BoonController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{authorId:guid}")]
-    public async Task<IList<Boon>> GetBoonsByAuthorAsync(Guid authorId, CancellationToken ct = default)
+    public async Task<IList<BoonByAuthorDto>> GetBoonsByAuthorAsync(Guid authorId, CancellationToken ct = default)
     {
         return await mediator.ExecuteQueryAsync(new GetBoonsByAuthorQuery(authorId), ct);
     }
