@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Poc.DomainDrivenDesign.Api/Poc.DomainDrivenDesign.Api.csproj" />
+  <Project Path="Poc.DomainDrivenDesign.Application/Poc.DomainDrivenDesign.Application.csproj" />
+  <Project Path="Poc.DomainDrivenDesign.Domain/Poc.DomainDrivenDesign.Domain.csproj" />
+  <Project Path="Poc.DomainDrivenDesign.Infrastructure/Poc.DomainDrivenDesign.Infrastructure.csproj" />
+  <Project Path="Poc.DomainDrivenDesign.Persistence/Poc.DomainDrivenDesign.Persistence.csproj" />
+</Solution>
